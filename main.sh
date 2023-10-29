@@ -10,22 +10,28 @@ caminho_no_computador="./Testes"
 # Montagem
 sudo mount.cifs "$caminho_pasta_compartilhada" "$caminho_no_computador" -o username="$username",password="$password"
 
-cd ./Testes/1
-
+cd ./Testes/pdbs
 arquivos_ent=(*.ent)
 
-if [ ${#arquivo_ent[@]} -gt 0 ]; then
+# Irá operar por tempo indeterminado
+while [ ${#arquivo_ent[@]} -gt 0 ]; do
     indice_aleatorio=$((RANDOM % ${#arquivo_ent[@]}))
     arquivo="${arquivos_ent[$indice_aleatorio]}"
-fi
 
-cd ../
+    cd ../
 
-./CalculaDistancias.sh "./1/$arquivo
+    ## Será que seria melhor mover o arquivo para um diretório pessoal 
+    ## E realizar paralelamente com & ?
 
-mv log_$arquivo.txt ./1/
-mv ./1/$arquivo ./2/
+    ./CalculaDistancias.sh "./pdbs/$arquivo" 
 
-./VerificarMenor.sh "./1/log_$arquivo.txt"
+    mv log_$arquivo.txt ./logs/
 
-mv menor_log_$arquivo.txt ./1/
+    ./VerificarMenor.sh "./logs/log_$arquivo.txt"
+
+    mv menor_log_$arquivo.txt ./menor/ 
+
+    cd ./Testes/pdbs
+    arquivos_ent=(*.ent)
+done
+
