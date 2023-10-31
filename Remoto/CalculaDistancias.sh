@@ -1,9 +1,8 @@
 #!/bin/bash
 
 arquivo_pdb="$1"
-
-# Extrai o primeiro átomo do arquivo PDB
-primeiro_atomo=$(grep "^ATOM" "$arquivo_pdb" | head -n 1 | awk '{print $2}')
+primeiro_atomo="$2"
+menor_distancia="$3"
 
 # Saída
 log_file="log_$arquivo_pdb.txt"
@@ -17,7 +16,7 @@ registrar_log() {
   at1="$2"
   at2="$3"
   tempo_termino="$4"
-  echo "Distância entre $at1 e $at2: $distancia e-10 m - Tempo de término: $tempo_termino" >> "$log_file"
+  echo "Distância entre $at1 e $at2: $distancia E-10 m - Tempo de término: $tempo_termino" >> "$log_file"
 }
 
 # Função para calcular a distância entre o primeiro átomo e outro átomo
@@ -42,3 +41,5 @@ done
 
 # Espera pela conclusão de ambos os processos em segundo plano
 wait
+
+./VerificarMenor "$log_file" "$menor_distancia"

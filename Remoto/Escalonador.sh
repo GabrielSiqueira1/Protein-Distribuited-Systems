@@ -1,8 +1,7 @@
 #!/bin/bash
 
 arquivo_pdb="$1"
-declare -a primeiros_atomos=()  # Declarando um array vazio para armazenar os átomos
-max_processos_em_segundo_plano=$(ulimit -u)/4  # Defina o número máximo de processos em segundo plano desejado
+max_processos_em_segundo_plano=9000 # Número máximo de subprocessos incrementados por &
 
 # Função para esperar até que o número de processos em segundo plano seja menor que o limite
 esperar_limite_processos() {
@@ -17,19 +16,19 @@ if [ ! -f "$arquivo_pdb" ]; then
   exit 1
 fi
 
+# Definição da saída
+menor_distancia="menor_distancia.txt"
+
+# Cria o arquivo vazio
+> "$menor_distancia"
+
 # Loop para processar todas as linhas "ATOM" no arquivo .pdb
 while read -r linha; do
   if [[ $linha == "ATOM"* ]]; then
     atomo=$(echo "$linha" | awk '{print $2}')
-    primeiros_atomos+=("$atomo")  # Adicione o átomo ao array
+    esperar_limite_processos
+    ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" &
   fi
 done < "$arquivo_pdb"
 
-# Chame seu script para cada átomo armazenado no vetor
-for atomo in "${primeiros_atomos[@]}"; do
-  esperar_limite_processos  # Aguarde até que o número de processos em segundo plano seja menor que o limite
-  ./seu_script.sh "$arquivo_pdb" "$atomo" &
-done
-
-# Aguarde a conclusão de todos os processos em segundo plano
 wait

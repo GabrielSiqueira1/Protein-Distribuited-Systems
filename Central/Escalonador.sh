@@ -44,6 +44,7 @@ for pdb in "${pdbs[@]}"; do
                 resposta=""
                 while [ "$timeout" -gt 0 ]; do
                     if [ -z "$resposta" ]; do
+                        # É possível utilizar ssh {Segurança}
                         resposta=$(nc -l -p 9998)
                         sleep 1
                         timeout=$((timeout - 1))
@@ -55,12 +56,13 @@ for pdb in "${pdbs[@]}"; do
                 # Com a conclusão do processo é necessário alterar os arquivos .csv
                 if [ ! -z "$reposta" ]; then
                     echo "Arquivo não concluído, devolvendo $pdb ao vetor 'pdbs'"
-                    pdbs=("$pdb" "${pdb[@]}")
+                    pdbs=("$pdb" "${pdb[@]}") # O arquivo retorna ao vetor de pdbs para que seja novamente processado {Replicação}
                     sed -i "s/$pdb,1/$pdb,0/" "$arquivo_csv_2"
                 else 
                     sed -i "s/$ip,Ocupado/$ip,Livre,/" "$arquivo_csv_1"
                     sed -i "s/$pdb,1/$pdb,2/" "$arquivo_csv_2"
                 fi
+                
              ) &
 
             break # Interrompe o primeiro loop externo
