@@ -3,12 +3,11 @@
 arquivo_pdb="$1"
 primeiro_atomo="$2"
 menor_distancia="$3"
+linha_atual="$4"
 
-# Saída
-log_file="log_$arquivo_pdb.txt"
+tempo_inicial=$(date +%s)
 
-# Cria o arquivo vazio
-> "$log_file"
+menor=99999.0 # Servirá de comparativo para encontrar a menor distância
 
 # Função para registrar a distância e o tempo de término em um arquivo de log
 registrar_log() {
@@ -27,7 +26,10 @@ calcular_distancia() {
   if [ $atom2 -gt $primeiro_atomo ]; then
     distancia=`echo "scale=3;sqrt((${coordenadas_primeiro_atomo[0]} - ${coordenadas_atom2[0]})^2 + (${coordenadas_primeiro_atomo[1]} - ${coordenadas_atom2[1]})^2 + (${coordenadas_primeiro_atomo[2]} - ${coordenadas_atom2[2]})^2)" | bc`
 
-    registrar_log "$distancia" "$primeiro_atomo" "$atom2" "$(date +'%Y-%m-%d %H:%M:%S')"
+    if (( $(bc <<< "$distancia < $menor") )); then
+      menor="$distancia"
+      echo "$menor" > menor_distancia_$primeiro_atomo.tmp
+    fi
   fi
 }
 
@@ -35,11 +37,16 @@ calcular_distancia() {
 coordenadas_primeiro_atomo=($(grep "^ATOM.*$primeiro_atomo" "$arquivo_pdb" | awk '{print $7, $8, $9}'))
 
 # Loop para calcular a distância do primeiro átomo com todos os outros átomos no arquivo PDB
-grep "^ATOM" "$arquivo_pdb" | awk '{print $2}' | while read -r atom2; do
-  calcular_distancia "$atom2" & 
+tail -n +$linha_atual "$arquivo_pdb" | grep "^ATOM" | awk '{print $2}' | while read -r atom2; do
+  calcular_distancia "$atom2" 
 done
 
-# Espera pela conclusão de ambos os processos em segundo plano
-wait
+tempo_final=$(date +%s)
 
-./VerificarMenor "$log_file" "$menor_distancia"
+tempo_total=$((tempo_final - tempo_inicial))
+
+menor=$(cat menor_distancia_$primeiro_atomo.tmp)
+
+echo "Menor distância encontrada para o átomo $primeiro_atomo é de: $menor E-10 m, em um tempo de: $tempo_total" >> "$menor_distancia"
+
+rm menor_distancia_$primeiro_atomo.tmp
