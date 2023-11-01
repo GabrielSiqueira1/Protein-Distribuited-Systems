@@ -8,10 +8,21 @@ while true; do
 
   max_processos_em_segundo_plano=4 # Número máximo de subprocessos incrementados por &
 
+  progresso(){
+    local bars="/ - | \\"
+    local delay=0.1
+    for i in {1..20}; do
+      printf "\r[%c]" "${bars:i%8:1}"
+      sleep $delay
+    done
+    printf "\r" 
+  }
+
   # Função para esperar até que o número de processos em segundo plano seja menor que o limite
   esperar_limite_processos() {
     while [[ $(jobs | wc -l) -ge $max_processos_em_segundo_plano ]]; do
       sleep 1
+      progresso
     done
   }
 
@@ -40,5 +51,10 @@ while true; do
   done < "$arquivo_pdb"
 
   wait
+
+  nc "172.24.155.206" 9998 < "OK"
+  nc "172.24.155.206" 12345 < "$menor_distancia"
+
+  echo
 
 done

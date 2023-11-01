@@ -36,6 +36,9 @@ calcular_distancia() {
 # Extrai as coordenadas do primeiro átomo
 coordenadas_primeiro_atomo=($(grep "^ATOM.*$primeiro_atomo" "$arquivo_pdb" | awk '{print $7, $8, $9}'))
 
+linha_atual=1
+total_linhas=$(wc -l < "$arquivo_pdb")
+
 # Loop para calcular a distância do primeiro átomo com todos os outros átomos no arquivo PDB
 tail -n +$linha_atual "$arquivo_pdb" | grep "^ATOM" | awk '{print $2}' | while read -r atom2; do
   calcular_distancia "$atom2" 
