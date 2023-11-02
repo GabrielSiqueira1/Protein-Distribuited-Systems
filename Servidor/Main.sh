@@ -2,7 +2,7 @@
 
 # Para a distribuição dos arquivos e a verificação do seu sucesso por parte da máquina central, devemos utilizar os ip's das máquinas em um vetor, bem como um vetor de arquivos. {Naming}
 ip_computadores=("192.168.0.113")
-pdbs=("pdb1h6n.ent" "pdb2h6n.ent" "pdb3h6n.ent" "pdb4h6n.ent" "pdb5h6n.ent" "pdb6h6n.ent")
+pdbs=("pdb1h6n.ent" "pdb2h6n.ent")
 
 # Para a coordenação dos processos, criamos dois arquivos .csv cujo o propósito é a identificação do estado de uma máquina e de um arquivo. A máquina poderá estar livre ou ocupada, enquanto o arquivo pode estar como processado ou não. {Coordenação}
 arquivo_csv_1="estado_maquina.csv"
@@ -78,6 +78,8 @@ while ! arquivos_concluidos; do
                         break
                     fi
                 done
+
+                nc -l -p $indice_arquivo > "arquivo_$ip-$pdb.txt"
 
                 # Com a conclusão do processo é necessário alterar os arquivos .csv
                 if [ "$timeout" -eq 0 ]; then
