@@ -62,18 +62,18 @@ while ! arquivos_concluidos; do
             # O processos de monitoramento será em segundo plano  {Processos}
             ( 
 
-                timeout=1200 # Limite de tempo para o processo {Tolerância a falhas}
+                timeout=600 # Limite de tempo para o processo {Tolerância a falhas}
                 resposta=""
                 
-                resposta=$(nc -l -p $indice_arquivo) &
                 while [ "$timeout" -gt 0 ]; do
 		            echo "$timeout"
+                    resposta=$(timeout 1 nc -l -p $indice_arquivo) 
                     if [ -z "$resposta" ]; then
                         sleep 1
                         timeout=$((timeout - 1))
                     elif [ ! "$resposta" = "Finalizado" ]; then
-                        timeout=1200 # Reset de tempo
-                        sed -i "s/$ip,Ocupado,$pdb/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
+                        timeout=600 # Reset de tempo
+                        sed -i "s/$ip,Ocupado,$pdb.*/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
                     else
                         break
                     fi
@@ -84,7 +84,7 @@ while ! arquivos_concluidos; do
                     echo "Arquivo não concluído, devolvendo $pdb ao vetor 'pdbs'"
                     sed -i "s/$pdb,1/$pdb,0/" "$arquivo_csv_2"
                 else 
-                    sed -i "s/$ip,Ocupado/$ip,Livre,/" "$arquivo_csv_1"
+                    sed -i "s/$ip,Ocupado.*/$ip,Livre,/" "$arquivo_csv_1"
                     sed -i "s/$pdb,1/$pdb,2/" "$arquivo_csv_2"
                 fi
                 
