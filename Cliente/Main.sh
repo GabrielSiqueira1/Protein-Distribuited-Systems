@@ -2,12 +2,15 @@
 
 while true; do
 
-  #nc -l -p 9998 > "$arquivo_pdb" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
+  porta_retorno=$(nc -l -p 9998) # Cada máquina terá sua porta de comunicação com o servidor para que não haja conflitos
 
-  arquivo_pdb="teste.ent"
+  nc -l -p 9998 > "arquivo.txt" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
+
+  arquivo_pdb=arquivo.txt
 
   max_processos_em_segundo_plano=4 # Número máximo de subprocessos incrementados por &
 
+  # Barrinha indicando que o terminal está ativo
   progresso(){
     local bars="/ - | \\"
     local delay=0.1
@@ -23,6 +26,7 @@ while true; do
     while [[ $(jobs | wc -l) -ge $max_processos_em_segundo_plano ]]; do
       sleep 1
       progresso
+      nc "172.25.41.8" $porta_retorno -q 1 < "Ocupado com todos os processos ativos"
     done
   }
 
@@ -33,7 +37,7 @@ while true; do
   fi
 
   # Definição da saída
-  menor_distancia="menor_distancia_$arquivo_pdb.txt"
+  menor_distancia="menores_distancias_$arquivo_pdb.txt"
 
   # Cria o arquivo vazio
   > "$menor_distancia"
@@ -47,13 +51,16 @@ while true; do
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" &
+      nc "172.25.41.8" $porta_retorno -q 1 < "Realizando o cálculo do átomo $atomo"
     fi
   done < "$arquivo_pdb"
 
   wait
 
-  nc "172.24.155.206" 9998 < "OK"
-  nc "172.24.155.206" 12345 < "$menor_distancia"
+  nc "172.25.41.8" $porta_retorno -q 1 < "Calculando a menor distância geral"
+  ./VerificarMenor.sh $menor_distancia
+
+  nc "172.25.41.8" $porta_retorno -q 1 < "Finalizado"
 
   echo
 

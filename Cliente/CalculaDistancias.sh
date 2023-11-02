@@ -29,6 +29,7 @@ calcular_distancia() {
     if (( $(bc <<< "$distancia < $menor") )); then
       menor="$distancia"
       echo "$menor" > menor_distancia_$primeiro_atomo.tmp
+      echo "$atom2" > atomo_comparado_$primeiro_atomo.tmp
     fi
   fi
 }
@@ -49,7 +50,9 @@ tempo_final=$(date +%s)
 tempo_total=$((tempo_final - tempo_inicial))
 
 menor=$(cat menor_distancia_$primeiro_atomo.tmp)
+atomo_comparado=$(cat atomo_comparado_$primeiro_atomo.tmp)
 
-echo "Menor distância encontrada para o átomo $primeiro_atomo é de: $menor E-10 m, em um tempo de: $tempo_total" >> "$menor_distancia"
+echo "Menor distância encontrada para o átomo $primeiro_atomo é de: $menor E-10 m, entre ele e o $atomo_comparado em um tempo de: $tempo_total" >> "$menor_distancia"
 
 rm menor_distancia_$primeiro_atomo.tmp
+rm atomo_comparado_$primeiro_atomo.tmp
