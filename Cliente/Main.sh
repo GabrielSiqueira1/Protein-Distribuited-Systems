@@ -50,7 +50,7 @@ while true; do
     if [[ $linha == "ATOM"* ]]; then
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
-      ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" &
+      ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" 
       echo "Realizando o cálculo do átomo $atomo" | nc "172.25.41.8" $porta_retorno -q 1
     fi
   done < "$arquivo_pdb"

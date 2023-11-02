@@ -52,7 +52,7 @@ while ! arquivos_concluidos; do
 
             pdb="${pdbs[$indice_arquivo]}"
             echo "Enviando o pdb:$pdb para a máquina de ip:$ip"
-    
+    	    indice_arquivo=$((indice_arquivo + 1))
             # Para que o computador realize sua tarefa este deverá ter uma porta aberta para receber o arquivo da central {Comunicação}
 
             echo "$indice_arquivo" | nc -q 2 "$ip" 9998 # Envio da porta de retorno
@@ -62,15 +62,17 @@ while ! arquivos_concluidos; do
             # O processos de monitoramento será em segundo plano  {Processos}
             ( 
 
-                timeout=300 # Limite de tempo para o processo {Tolerância a falhas}
+                timeout=1200 # Limite de tempo para o processo {Tolerância a falhas}
                 resposta=""
+                
+                resposta=$(nc -l -p $indice_arquivo) &
                 while [ "$timeout" -gt 0 ]; do
-                    resposta=$(nc -l -p $indice_arquivo)
+		            echo "$timeout"
                     if [ -z "$resposta" ]; then
                         sleep 1
                         timeout=$((timeout - 1))
                     elif [ ! "$resposta" = "Finalizado" ]; then
-                        timeout=300 # Reset de tempo
+                        timeout=1200 # Reset de tempo
                         sed -i "s/$ip,Ocupado,$pdb/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
                     else
                         break
@@ -80,7 +82,6 @@ while ! arquivos_concluidos; do
                 # Com a conclusão do processo é necessário alterar os arquivos .csv
                 if [ "$timeout" -eq 0 ]; then
                     echo "Arquivo não concluído, devolvendo $pdb ao vetor 'pdbs'"
-                    pdbs=("$pdb" "${pdbs[@]}") # O arquivo retorna ao vetor de pdbs para que seja novamente processado {Replicação}
                     sed -i "s/$pdb,1/$pdb,0/" "$arquivo_csv_2"
                 else 
                     sed -i "s/$ip,Ocupado/$ip,Livre,/" "$arquivo_csv_1"
