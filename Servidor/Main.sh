@@ -11,7 +11,7 @@ arquivo_csv_2="estado_arquivo.csv"
 # Inicialização dos arquivos
 echo "IP,Estado,Arquivo,Comunicação" > "$arquivo_csv_1"
 for ip in "${ip_computadores[@]}"; do
-  echo "$ip,Livre" >> "$arquivo_csv_1"7
+  echo "$ip,Livre" >> "$arquivo_csv_1"
 done
 
 echo "Arquivo,Estado,IP" > "$arquivo_csv_2"
@@ -42,7 +42,7 @@ while ! arquivos_concluidos; do
             for ((i = 0; i < ${#pdbs[@]}; i++)); do
                 if [[ $(grep "${pdbs[i]},0" "$arquivo_csv_2") ]]; then
                 pdb="${pdbs[i]}"
-                indice_arquivo=i
+                indice_arquivo=$i
                 break
                 fi
             done
@@ -55,9 +55,10 @@ while ! arquivos_concluidos; do
     
             # Para que o computador realize sua tarefa este deverá ter uma porta aberta para receber o arquivo da central {Comunicação}
 
-            nc "$ip" 9998 -q 2 < "$indice_arquivo" # Envio da porta de retorno
+            echo "$indice_arquivo" | nc -q 2 "$ip" 9998 # Envio da porta de retorno
             nc "$ip" 9998 -q 10 < "$pdb" # Interrupção do socket e envio do pdb {Segurança}
 
+            echo "Enviado"
             # O processos de monitoramento será em segundo plano  {Processos}
             ( 
 
