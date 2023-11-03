@@ -3,7 +3,7 @@
 while true; do
 
   porta_retorno=$(nc -l -p 9998) # Cada máquina terá sua porta de comunicação com o servidor para que não haja conflitos
-
+  echo "$porta_retorno"
   nc -l -p 9998 > "arquivo.txt" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
 
   arquivo_pdb=arquivo.txt
@@ -37,7 +37,7 @@ while true; do
   fi
 
   # Definição da saída
-  menor_distancia="menores_distancias_$arquivo_pdb.txt"
+  menor_distancia="menores_distancias_$arquivo_pdb"
 
   # Cria o arquivo vazio
   > "$menor_distancia"
@@ -50,19 +50,19 @@ while true; do
     if [[ $linha == "ATOM"* ]]; then
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
-      ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" 
+      ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       echo "Realizando o cálculo do átomo $atomo" | nc "192.168.0.113" $porta_retorno -q 1
     fi
   done < "$arquivo_pdb"
 
   wait
 
-  echo "Calculando a menor distância geral" | nc "192.168.0.113" $porta_retorno -q 1
+  echo "Calculando a menor distância geral" | nc "192.168.0.113" $porta_retorno -q 10
   ./VerificarMenor.sh $menor_distancia
 
   echo "Finalizado" | nc "192.168.0.113" $porta_retorno -q 10
 
-  nc "192.168.0.113" $porta_retorno -q 10 < "$menor_distancia"
+  nc "192.168.0.113" $porta_retorno -q 10 < "menor_valor_das_$menor_distancia"
 
   echo
 
