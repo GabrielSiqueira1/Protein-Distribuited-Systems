@@ -23,7 +23,6 @@ while true; do
 
   # Função para esperar até que o número de processos em segundo plano seja menor que o limite
   esperar_limite_processos() {
-    echo "Ocupado com todos os processos ativos" | nc "192.168.0.113" $porta_retorno -q 1
     while [[ $(jobs | wc -l) -ge $max_processos_em_segundo_plano ]]; do
       sleep 1
       progresso
@@ -51,7 +50,9 @@ while true; do
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
-      echo "Realizando o cálculo do átomo $atomo" | nc "192.168.0.113" $porta_retorno -q 1
+      if [ $((linha_atual % 10)) -eq 0 ];then
+	echo "Realizando o cálculo do átomo $atomo" | nc "192.168.0.113" $porta_retorno -q 10
+      fi
     fi
   done < "$arquivo_pdb"
 
@@ -59,11 +60,22 @@ while true; do
 
   echo "Calculando a menor distância geral" | nc "192.168.0.113" $porta_retorno -q 10
   ./VerificarMenor.sh $menor_distancia
-
-  echo "Finalizado" | nc "192.168.0.113" $porta_retorno -q 10
-
-  nc "192.168.0.113" $porta_retorno -q 10 < "menor_valor_das_$menor_distancia"
-
+  
+  while true; do
+     echo "Finalizado" | nc "192.168.0.113" $porta_retorno -q 5
+     if [ $? -eq 0 ]; then
+       sleep 1 
+       break
+     fi
+  done
+  while true; do
+     nc "192.168.0.113" $porta_retorno -q 2 < "menor_valor_das_$menor_distancia"
+     if [ $? -eq 0 ]; then
+        sleep 1
+        break
+     fi 
+  done
+ 
   echo
 
 done
