@@ -7,6 +7,10 @@ linha_atual="$4"
 
 tempo_inicial=$(date +%s)
 
+> menor_distancia_$primeiro_atomo.tmp
+
+> atomo_comparado_$primeiro_atomo.tmp
+
 menor=99999.0 # Servirá de comparativo para encontrar a menor distância
 
 # Função para registrar a distância e o tempo de término em um arquivo de log

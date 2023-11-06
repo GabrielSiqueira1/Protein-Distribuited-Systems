@@ -51,31 +51,32 @@ while true; do
       esperar_limite_processos
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       if [ $((linha_atual % 10)) -eq 0 ];then
-	echo "Realizando o cálculo do átomo $atomo" | nc "192.168.0.113" $porta_retorno -q 10
+	echo "Realizando o cálculo do átomo $atomo" | nc "192.168.0.114" $porta_retorno -q 10
       fi
     fi
   done < "$arquivo_pdb"
 
   wait
 
-  echo "Calculando a menor distância geral" | nc "192.168.0.113" $porta_retorno -q 10
+  echo "Calculando a menor distância geral" | nc "192.168.0.114" $porta_retorno -q 10
   ./VerificarMenor.sh $menor_distancia
   
+  echo "Enviando o arquivo"
   while true; do
-     echo "Finalizado" | nc "192.168.0.113" $porta_retorno -q 5
+     echo "Finalizado" | nc "192.168.0.114" $porta_retorno -q 5
      if [ $? -eq 0 ]; then
        sleep 1 
        break
      fi
   done
   while true; do
-     nc "192.168.0.113" $porta_retorno -q 2 < "menor_valor_das_$menor_distancia"
+     nc "192.168.0.114" $porta_retorno -q 2 < "menor_valor_das_$menor_distancia"
      if [ $? -eq 0 ]; then
         sleep 1
         break
      fi 
   done
  
-  echo
+  echo "Enviado"
 
 done
