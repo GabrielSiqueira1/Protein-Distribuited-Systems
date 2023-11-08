@@ -5,6 +5,8 @@ while true; do
   porta_retorno=$(nc -l -p 9998) # Cada máquina terá sua porta de comunicação com o servidor para que não haja conflitos
   echo "$porta_retorno"
   nc -l -p 9998 > "arquivo.txt" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
+  ip_server="172.16.111.41"
+  ip_server_2="172.16.111.45"
 
   arquivo_pdb=arquivo.txt
 
@@ -51,32 +53,46 @@ while true; do
       esperar_limite_processos
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       if [ $((linha_atual % 10)) -eq 0 ];then
-	echo "Realizando o cálculo do átomo $atomo" | nc "192.168.0.114" $porta_retorno -q 10
+	      echo "Realizando o cálculo do átomo $atomo" | nc "$ip_sever" $porta_retorno -q 2
       fi
     fi
   done < "$arquivo_pdb"
 
   wait
 
-  echo "Calculando a menor distância geral" | nc "192.168.0.114" $porta_retorno -q 10
+  echo "Calculando a menor distância geral" | nc "$ip_sever" $porta_retorno -q 2
   ./VerificarMenor.sh $menor_distancia
   
   echo "Enviando o arquivo"
-  while true; do
-     echo "Finalizado" | nc "192.168.0.114" $porta_retorno -q 5
-     if [ $? -eq 0 ]; then
-       sleep 1 
-       break
-     fi
-  done
-  while true; do
-     nc "192.168.0.114" $porta_retorno -q 2 < "menor_valor_das_$menor_distancia"
-     if [ $? -eq 0 ]; then
-        sleep 1
+  timeout=600
+  if [ ! $timeout -eq 0 ]; then
+    while true; do
+      echo "Finalizado" | nc "$ip_sever" $porta_retorno -q 2
+      if [ $? -eq 0 ]; then
+        sleep 1 
         break
-     fi 
-  done
- 
+      fi
+      timeout=$((timeout - 1))
+    done
+    while true; do
+      nc "$ip_sever" $porta_retorno -q 2 < "menor_valor_das_$menor_distancia"
+      if [ $? -eq 0 ]; then
+          sleep 1
+          break
+      fi 
+      timeout=$((timeout - 1))
+    done
+  else # Envio para outro servidor
+    while true; do
+      menor_valor_das_$menor_distancia >> "arquivo_$(hostname -I)-$porta_retorno.txt"
+      nc "$ip_sever_2" $porta_retorno -q 2 < "arquivo_$(hostname -I)-$porta_retorno.txt"
+      if [ $? -eq 0 ]; then
+          sleep 1
+          break
+      fi 
+    done
+  fi
+  
   echo "Enviado"
 
 done
