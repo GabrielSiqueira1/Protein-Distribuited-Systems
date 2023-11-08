@@ -53,21 +53,21 @@ while true; do
       esperar_limite_processos
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       if [ $((linha_atual % 10)) -eq 0 ];then
-	      echo "Realizando o cálculo do átomo $atomo" | nc "$ip_sever" $porta_retorno -q 2
+	      echo "Realizando o cálculo do átomo $atomo" | nc "$ip_server" $porta_retorno -q 5
       fi
     fi
   done < "$arquivo_pdb"
 
   wait
 
-  echo "Calculando a menor distância geral" | nc "$ip_sever" $porta_retorno -q 2
+  echo "Calculando a menor distância geral" | nc "$ip_server" $porta_retorno -q 5
   ./VerificarMenor.sh $menor_distancia
   
   echo "Enviando o arquivo"
   timeout=600
   if [ ! $timeout -eq 0 ]; then
     while true; do
-      echo "Finalizado" | nc "$ip_sever" $porta_retorno -q 2
+      echo "Finalizado" | nc "$ip_server" $porta_retorno -q 5
       if [ $? -eq 0 ]; then
         sleep 1 
         break
@@ -75,7 +75,7 @@ while true; do
       timeout=$((timeout - 1))
     done
     while true; do
-      nc "$ip_sever" $porta_retorno -q 2 < "menor_valor_das_$menor_distancia"
+      nc "$ip_server" $porta_retorno -q 5 < "menor_valor_das_$menor_distancia"
       if [ $? -eq 0 ]; then
           sleep 1
           break
@@ -85,7 +85,7 @@ while true; do
   else # Envio para outro servidor
     while true; do
       menor_valor_das_$menor_distancia >> "arquivo_$(hostname -I)-$porta_retorno.txt"
-      nc "$ip_sever_2" $porta_retorno -q 2 < "arquivo_$(hostname -I)-$porta_retorno.txt"
+      nc "$ip_server_2" $porta_retorno -q 5 < "arquivo_$(hostname -I)-$porta_retorno.txt"
       if [ $? -eq 0 ]; then
           sleep 1
           break
