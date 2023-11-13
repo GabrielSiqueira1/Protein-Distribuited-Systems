@@ -1,23 +1,54 @@
 #!/bin/bash
 
 # Para a distribuição dos arquivos e a verificação do seu sucesso por parte da máquina central, devemos utilizar os ip's das máquinas em um vetor, bem como um vetor de arquivos. {Naming}
-ip_computadores=("172.16.111.42" "172.16.111.43" "172.16.111.44")
-pdbs=("pdb1h6n.ent" "pdb2h6n.ent" "pdb3h6n.ent" "pdb4bm0.ent" "pdb4bm1.ent" "pdb4bm2.ent" "pdb4bm3.ent" "pdb4bm4.ent" "pdb4bm5.ent" "pdb5h6n.ent" "pdb6h6n.ent")
+
+atualizar_config(){
+
+	# Adiciona as propriedades por meio de um arquivo
+	local config_file="config.txt"
+	local temp_ip_computadores=()
+	local temp_pdbs=()
+
+	while IFS= read -r line; do
+
+		if [[ $line =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+			temp_ip_computadores+=("$line")
+		else
+			temp_pdbs+=("$line")
+		fi
+
+	done < "$config_file"
+
+	# Em um escalonamento dinâmico, devemos verificar se houve alteração no arquivo .txt
+	if [[ "${temp_ip_computadore[*]}" != "${ip_computadores[*]}" || "${temp_pdbs[*]}" != "${pdbs[*]}" ]]; then
+		ip_computadores=("${temp_ip_computadores[@]}")
+        pdbs=("${temp_pdbs[@]}")
+        echo "Os vetores foram atualizados."
+
+        # Atualiza o arquivo CSV com as novas entradas
+        for new_ip in "${temp_ip_computadores[@]}"; do
+            if ! grep -q "$new_ip" "$arquivo_csv_1"; then
+                echo "$new_ip,Livre" >> "$arquivo_csv_1"
+            fi
+        done
+
+        for new_pdb in "${temp_pdbs[@]}"; do
+            if ! grep -q "$new_pdb" "$arquivo_csv_2"; then
+                echo "$new_pdb,0" >> "$arquivo_csv_2"
+            fi
+        done
+	fi
+}
+
+ip_computadores=()
+pdbs=()
 
 # Para a coordenação dos processos, criamos dois arquivos .csv cujo o propósito é a identificação do estado de uma máquina e de um arquivo. A máquina poderá estar livre ou ocupada, enquanto o arquivo pode estar como processado ou não. {Coordenação}
 arquivo_csv_1="estado_maquina.csv"
 arquivo_csv_2="estado_arquivo.csv"
 
 # Inicialização dos arquivos
-echo "IP,Estado,Arquivo,Comunicação" > "$arquivo_csv_1"
-for ip in "${ip_computadores[@]}"; do
-  echo "$ip,Livre" >> "$arquivo_csv_1"
-done
-
-echo "Arquivo,Estado,IP" > "$arquivo_csv_2"
-for pdb in "${pdbs[@]}"; do
-  echo "$pdb,0" >> "$arquivo_csv_2"
-done
+atualizar_config
 
 # Verificação de ip livre no arquivo csv {Coordenação}
 ip_livre(){
@@ -54,17 +85,26 @@ while ! arquivos_concluidos; do
 				indice_arquivo=$((indice_arquivo + 1025))
 				# Para que o computador realize sua tarefa este deverá ter uma porta aberta para receber o arquivo da central {Comunicação}
 
-			sleep 1
-				echo "$indice_arquivo" | nc -q 10 "$ip" 9998 # Envio da porta de retorno
-				if [ $? -eq 0 ]; then
-					sleep 1
-					nc "$ip" 9998 -q 10 < "$pdb" # Interrupção do socket e envio do pdb {Segurança}
-					echo "Enviado"
+
+				while true; do
+					echo "$indice_arquivo" | nc -q 5 "$ip" 9998 # Envio da porta de retorno
+					if [ $? -eq 0 ]; then
+						break
+					fi
+				done
 				
-					sed -i "s/$ip,Livre/$ip,Ocupado,$pdb/" "$arquivo_csv_1" # Substituição do valor de estado do ip
-					sed -i "s/$pdb,0/$pdb,1,$ip/" "$arquivo_csv_2" # Substituição do valor de estado do arquivo para processando
-					
-					# O processos de monitoramento será em segundo plano  {Processos}
+				while true; do
+					nc "$ip" 9998 -q 5 < "$pdb" # Interrupção do socket e envio do pdb {Segurança}
+					if [ $? -eq 0 ]; then
+						break
+					fi
+				done
+				echo "Enviado"
+			
+				sed -i "s/$ip,Livre/$ip,Ocupado,$pdb/" "$arquivo_csv_1" # Substituição do valor de estado do ip
+				sed -i "s/$pdb,0/$pdb,1,$ip/" "$arquivo_csv_2" # Substituição do valor de estado do arquivo para processando								sleep 1
+				
+				# O processos de monitoramento será em segundo plano  {Processos}
 				( 
 
 					timeout=200 # Limite de tempo para o processo {Tolerância a falhas}
@@ -79,13 +119,12 @@ while ! arquivos_concluidos; do
 						elif [ ! "$resposta" = "Finalizado" ]; then
 							timeout=200 # Reset de tempo
 							sleep 1
-							sed -i "s/$ip,Ocupado,$pdb.*/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
+							sed -i "s/$ip,Ocupado,$pdb,/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
 						else
-							sed -i "s/$ip,Ocupado,$pdb.*/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
+							sed -i "s/$ip,Ocupado,$pdb,/$ip,Ocupado,$pdb,$resposta/" "$arquivo_csv_1"
 							while true; do
-								nc -l -p $indice_arquivo > "arquivo_$ip-$pdb.txt"
+								timeout 5 nc -l -p $indice_arquivo > "arquivo_$ip-$pdb.txt"
 								if [ $? -eq 0 ]; then
-									sleep 1
 									break
 								fi
 							done
@@ -93,14 +132,12 @@ while ! arquivos_concluidos; do
 						fi	
 					done
 
-					sleep 1
 					# Com a conclusão do processo é necessário alterar os arquivos .csv
 					if [ "$timeout" -eq 0 ]; then
 						echo "Arquivo não concluído"
 						while true; do
 							sed -i "s/$pdb,1/$pdb,0/" "$arquivo_csv_2"
 							if [ $? -eq 0 ]; then
-								sleep 1
 								break
 							fi
 						done
@@ -108,14 +145,12 @@ while ! arquivos_concluidos; do
 						while true; do
 							sed -i "s/$pdb,1/$pdb,2/" "$arquivo_csv_2"
 							if [ $? -eq 0 ]; then
-								sleep 1
 								break
 							fi
 						done
 						while true; do
-							sed -i "s/$ip,Ocupado.*/$ip,Livre,/" "$arquivo_csv_1"
+							sed -i "s/$ip,Ocupado,/$ip,Livre,/" "$arquivo_csv_1"
 							if [ $? -eq 0 ]; then
-								sleep 1
 								break
 							fi
 						done

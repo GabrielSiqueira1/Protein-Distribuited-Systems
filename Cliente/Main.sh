@@ -68,8 +68,7 @@ while true; do
   if [ ! $timeout -eq 0 ]; then
     while true; do
       echo "Finalizado" | nc "$ip_server" $porta_retorno -q 5
-      if [ $? -eq 0 ]; then
-        sleep 1 
+      if [ $? -eq 0 ]; then 
         break
       fi
       timeout=$((timeout - 1))
@@ -77,7 +76,6 @@ while true; do
     while true; do
       nc "$ip_server" $porta_retorno -q 5 < "menor_valor_das_$menor_distancia"
       if [ $? -eq 0 ]; then
-          sleep 1
           break
       fi 
       timeout=$((timeout - 1))
@@ -87,7 +85,6 @@ while true; do
       menor_valor_das_$menor_distancia >> "arquivo_$(hostname -I)-$porta_retorno.txt"
       nc "$ip_server_2" $porta_retorno -q 5 < "arquivo_$(hostname -I)-$porta_retorno.txt"
       if [ $? -eq 0 ]; then
-          sleep 1
           break
       fi 
     done
