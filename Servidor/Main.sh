@@ -158,11 +158,11 @@ while ! arquivos_concluidos; do
 					
 				) &
 
-				fi
 			fi
-
-			break # Interrompe o primeiro loop externo
 			
+			break # Interrompe o primeiro loop externo
+
 		fi
+			
 	done
 done
