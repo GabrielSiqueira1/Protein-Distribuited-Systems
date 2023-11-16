@@ -49,13 +49,14 @@ while true; do
   while read -r linha; do
     linha_atual=$((linha_atual + 1))
     if [[ $linha == "ATOM"* ]]; then
+      horario_atual=$(date +"%Y-%m-%d %H:%M:%S")
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
       frase="      -> Estamos calculando o atomo $atomo"
       printf "\r%s" "$frase"
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       if [ $((linha_atual % 10)) -eq 0 ];then
-	      echo "Realizando o cálculo do átomo $atomo" | nc "$ip_server" $porta_retorno -q 5
+	      echo "Tempo: $horario_atual -> Realizando o cálculo do átomo $atomo" | nc "$ip_server" $porta_retorno -q 5
       fi
     fi
   done < "$arquivo_pdb"
