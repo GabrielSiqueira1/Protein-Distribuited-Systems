@@ -1,33 +1,19 @@
 #!/bin/bash
 
-diretorio_origem="./"
-maquina_destino="172.16.111.41"
-porta_destino="11000"
-porta_recebimento="10000"
+PORT=10000
 
-verificar_arquivos() {
-    ls "$diretorio_origem"/*.txt 2>/dev/null
-}
+# Inicia o servidor na porta especificada
+echo "Aguardando conexões na porta $PORT..."
+nc -l -p $PORT | while true; do
+    # Lê o nome do arquivo e o conteúdo enviado pelo cliente
+    read -r FILENAME
+    read -r CONTENT
 
-while true; do
-    # Verifica se há arquivos no diretório
-    if arquivos=$(verificar_arquivos); then
-        # Envia todos os arquivos para a máquina de destino usando o netcat
-        for arquivo in $arquivos; do
-	    nome_arquivo=$(basename "$arquivo")
-            nc -q 1 "$maquina_destino" "$porta_destino" < "$arquivo"
-            echo "Enviado: $arquivo"
-        done
-    fi
+    # Caminho completo do arquivo de destino
+    DEST_FILE="$FILENAME"
 
-    # Verifica se há arquivos recebidos na porta de recebimento
-    arquivo_recebido=$(nc -l -p "$porta_recebimento" -q 1)
+    # Salva o conteúdo no arquivo de destino
+    echo -e "$CONTENT" > "$DEST_FILE"
 
-    if [ -n "$arquivo_recebido" ]; then
-        nome_arquivo=$(basename "$arquivo_recebido")
-        mv "$arquivo_recebido" "$diretorio_origem/$nome_arquivo"
-        echo "Recebido: $nome_arquivo"
-    fi
-
-    sleep 1
+    echo "Arquivo recebido e salvo em: $DEST_FILE"
 done
