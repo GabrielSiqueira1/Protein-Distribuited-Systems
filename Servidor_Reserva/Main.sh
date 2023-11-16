@@ -9,11 +9,7 @@ nc -l -p $PORT | while true; do
     read -r FILENAME
     read -r CONTENT
 
-    # Caminho completo do arquivo de destino
-    DEST_FILE="$FILENAME"
+    echo -e "$CONTENT" > "$FILENAME"
 
-    # Salva o conteúdo no arquivo de destino
-    echo -e "$CONTENT" > "$DEST_FILE"
-
-    echo "Arquivo recebido e salvo em: $DEST_FILE"
+    echo "Arquivo $FILENAME recebido"
 done
