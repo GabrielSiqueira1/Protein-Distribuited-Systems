@@ -51,6 +51,8 @@ while true; do
     if [[ $linha == "ATOM"* ]]; then
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
+      frase="      -> Estamos calculando o atomo $atomo"
+      printf "\r%s" "$frase"
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       if [ $((linha_atual % 10)) -eq 0 ];then
 	      echo "Realizando o cálculo do átomo $atomo" | nc "$ip_server" $porta_retorno -q 5
@@ -60,6 +62,8 @@ while true; do
 
   wait
 
+  echo 
+  
   echo "Calculando a menor distância geral" | nc "$ip_server" $porta_retorno -q 5
   ./VerificarMenor.sh $menor_distancia
   
@@ -73,6 +77,7 @@ while true; do
       fi
       timeout=$((timeout - 1))
     done
+    sleep 5
     while true; do
       nc "$ip_server" $porta_retorno -q 5 < "menor_valor_das_$menor_distancia"
       if [ $? -eq 0 ]; then
