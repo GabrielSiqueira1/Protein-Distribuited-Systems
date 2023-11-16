@@ -52,7 +52,7 @@ while true; do
       horario_atual=$(date +"%Y-%m-%d %H:%M:%S")
       atomo=$(echo "$linha" | awk '{print $2}')
       esperar_limite_processos
-      frase="      -> Estamos calculando o atomo $atomo"
+      frase="      -> Estamos calculando usando atomo $atomo"
       printf "\r%s" "$frase"
       ./CalculaDistancias.sh "$arquivo_pdb" "$atomo" "$menor_distancia" "$linha_atual" & 
       if [ $((linha_atual % 10)) -eq 0 ];then
@@ -62,10 +62,12 @@ while true; do
   done < "$arquivo_pdb"
 
   wait
+  
+  echo "Calculando a menor distância geral" | nc "$ip_server" $porta_retorno -q 5
+  printf "\r%s" "Calculando a menor distância geral"
 
   echo 
   
-  echo "Calculando a menor distância geral" | nc "$ip_server" $porta_retorno -q 5
   ./VerificarMenor.sh $menor_distancia
   
   echo "Enviando o arquivo"
