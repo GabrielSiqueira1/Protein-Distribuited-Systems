@@ -89,8 +89,8 @@ while true; do
       timeout=$((timeout - 1))
     done
     # Envio do mesmo arquivo para outro servidor {Replicação}
-    menor_valor_das_$menor_distancia >> "arquivo_$(hostname -I)-$porta_retorno.txt"
-    nc "$ip_server_2" 10000 -q 5 < "arquivo_$(hostname -I)-$porta_retorno.txt"
+    menor_valor_das_$menor_distancia >> "arquivo_$(hostname -I).txt"
+    nc "$ip_server_2" 10000 -q 5 < "arquivo_$(hostname -I).txt"
   fi
   
   echo "Enviado"
