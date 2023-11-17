@@ -5,8 +5,8 @@ while true; do
   porta_retorno=$(nc -l -p 9998) # Cada máquina terá sua porta de comunicação com o servidor para que não haja conflitos
   echo "$porta_retorno"
   nc -l -p 9998 > "arquivo.txt" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
-  ip_server="172.16.111.41"
-  ip_server_2="172.16.111.45"
+  ip_server="192.168.0.118"
+  ip_server_2="172.168.0.120"
 
   arquivo_pdb=arquivo.txt
 

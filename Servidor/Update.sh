@@ -12,6 +12,12 @@ for file in arquivo-*.txt; do
 
         filename=$(echo "$linha" | cut -d',' -f3)
 
+        status=$(echo "$linha" | cut -d',' -f2)
+
+        if [ "$status" = "Ocupado" ]; then
+            sed -i "s/$ip,Ocupado,/$ip,Livre,/" "$arquivo_csv"
+        fi
+
         if grep -q "$filename" "$arquivo_csv_2"; then
             sed -i "s/$filename,1,/$filename,2,/" "$arquivo_csv_2"
         fi

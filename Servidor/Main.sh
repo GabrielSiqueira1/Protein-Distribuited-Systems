@@ -156,10 +156,8 @@ while ! arquivos_concluidos; do
 					fi
 				
 			fi
-			atualizar_config
 			break # Interrompe o primeiro loop externo
-
 		fi
-			
+		atualizar_config
 	done
 done
