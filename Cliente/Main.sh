@@ -4,9 +4,10 @@ while true; do
 
   porta_retorno=$(nc -l -p 9998) # Cada máquina terá sua porta de comunicação com o servidor para que não haja conflitos
   echo "$porta_retorno"
+  nome_arquivo=$(nc -l -p 9998)
   nc -l -p 9998 > "arquivo.txt" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
   ip_server="192.168.0.118"
-  ip_server_2="172.168.0.120"
+  ip_server_2="192.168.0.121"
 
   arquivo_pdb=arquivo.txt
 
@@ -64,7 +65,7 @@ while true; do
   wait
   
   echo "Calculando a menor distância geral" | nc "$ip_server" $porta_retorno -q 5
-  printf "\r%s" "Calculando a menor distância geral"
+  printf "\r%s" "Calculando a menor distância geral                             "
 
   echo 
   
@@ -90,9 +91,9 @@ while true; do
     done
     # Envio do mesmo arquivo para outro servidor {Replicação}
     LOCAL_IP=$(hostname -I | awk '{print $1}')
-    FILENAME="arquivo-$LOCAL_IP.txt"
+    FILENAME="arquivo-$LOCAL_IP-$nome_arquivo.txt"
     echo "$FILENAME" | nc $ip_server_2 10000 -q 5
-    cat "menor_valor_das_$menor_distancia" | nc $ip_server_2 10000 -q 5
+    nc "$ip_server_2" 10000 -q 5 < "menor_valor_das_$menor_distancia"
   fi
   
   echo "Enviado"
