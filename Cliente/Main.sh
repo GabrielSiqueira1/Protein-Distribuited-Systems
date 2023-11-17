@@ -90,7 +90,7 @@ while true; do
     done
     # Envio do mesmo arquivo para outro servidor {Replicação}
     LOCAL_IP=$(hostname -I | awk '{print $1}')
-    FILENAME=$(cat "menor_valor_das_$menor_distancia")
+    FILENAME="arquivo-$LOCAL_IP.txt"
     echo "$FILENAME" | nc $ip_server_2 10000 -q 5
     cat "menor_valor_das_$menor_distancia" | nc $ip_server_2 10000 -q 5
   fi
