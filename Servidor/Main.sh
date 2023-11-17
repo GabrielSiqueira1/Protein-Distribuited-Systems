@@ -23,7 +23,7 @@ atualizar_config(){
 	if [[ "${temp_ip_computadore[*]}" != "${ip_computadores[*]}" || "${temp_pdbs[*]}" != "${pdbs[*]}" ]]; then
 		ip_computadores=("${temp_ip_computadores[@]}")
         pdbs=("${temp_pdbs[@]}")
-        echo "Os vetores foram atualizados."
+        #echo "Os vetores foram atualizados."
 
         # Atualiza o arquivo CSV com as novas entradas
         for new_ip in "${temp_ip_computadores[@]}"; do
@@ -94,6 +94,7 @@ while ! arquivos_concluidos; do
 				echo "$indice_arquivo" | nc -q 5 "$ip" 9998 # Envio da porta de retorno
 					if [ $? -eq 0 ]; then
 						sleep 1
+						echo "$pdb" | nc "$ip" 9998 -q 5
 						nc "$ip" 9998 -q 5 < "$pdb" # Interrupção do socket e envio do pdb {Segurança}
 						echo "Enviado"
 			
