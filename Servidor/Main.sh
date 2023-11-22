@@ -2,6 +2,8 @@
 
 # Para a distribuição dos arquivos e a verificação do seu sucesso por parte da máquina central, devemos utilizar os ip's das máquinas em um vetor, bem como um vetor de arquivos. {Naming}
 
+chave="chave1234567890ab"
+
 atualizar_config(){
 
 	# Adiciona as propriedades por meio de um arquivo
@@ -95,7 +97,9 @@ while ! arquivos_concluidos; do
 					if [ $? -eq 0 ]; then
 						sleep 1
 						echo "$pdb" | nc "$ip" 9998 -q 5
-						nc "$ip" 9998 -q 5 < "$pdb" # Interrupção do socket e envio do pdb {Segurança}
+						# Criptografia do arquivo {Segurança}
+						tar cz "$pdb" | openssl enc -aes-256-cbc -a -k "$chave" -pbkdf2 | nc -q 5 "$ip" 9998
+						# nc "$ip" 9998 -q 5 < "$pdb" 
 						echo "Enviado"
 			
 						sed -i "s/$ip,Livre/$ip,Ocupado,$pdb/" "$arquivo_csv_1" # Substituição do valor de estado do ip
