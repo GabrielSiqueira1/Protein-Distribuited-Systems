@@ -2,12 +2,16 @@
 
 while true; do
 
+  chave="chave1234567890ab"
+
   porta_retorno=$(nc -l -p 9998) # Cada máquina terá sua porta de comunicação com o servidor para que não haja conflitos
   echo "$porta_retorno"
   nome_arquivo=$(nc -l -p 9998)
-  nc -l -p 9998 > "arquivo.txt" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
-  ip_server="192.168.0.118"
-  ip_server_2="192.168.0.121"
+  nc -l -p 9998 > "arquivo_encrypt"
+  nc -l -p 9998 | openssl enc -d -aes-256-cbc -a -k $chave -pbkdf2 | tar xz -C "./" # A cada análise, esse loop trava neste ponto, para receber outros arquivos
+  mv "$nome_arquivo" "arquivo.txt" 
+  ip_server="172.16.111.41"
+  ip_server_2="172.16.111.65"
 
   arquivo_pdb=arquivo.txt
 
